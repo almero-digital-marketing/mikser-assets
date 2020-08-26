@@ -15,7 +15,6 @@ const processors = {
 function lookupFile(mikser, filePath) {
 	const possibleFilePaths = _.flatten([
 		path.join(mikser.options.workingFolder, 'files', filePath),
-		path.join(mikser.options.workingFolder, 'public', filePath),
 		mikser.config.shared.map((shared) => path.join(mikser.options.workingFolder, 'shared', shared, filePath)),
 	])
 
