@@ -145,7 +145,6 @@ module.exports = function(mikser) {
 					return caching.process().then(() => actionConfig)
 				}
 
-				console.log('⚙️', actionConfig.destination.replace(mikser.options.workingFolder, ''))
 				const processor = processors[actionConfig.config.processor] || processors['default']
 				return processor(mikser, _.pick(actionConfig, ['source', 'destination', 'config.actions']))
 					.then(() => {
