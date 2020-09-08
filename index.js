@@ -44,7 +44,7 @@ module.exports = function(mikser) {
 
 		let types = []
 		for (let item of preset) {
-			if (new RegExp(item.lookup).test(document.meta.href) || new RegExp(item.lookup).test(document.meta.layout)) {
+			if (new RegExp(item.lookup).test(document.meta.href) || layouts.indexOf(item.lookup) != -1) {
 				types.push(item.paths)
 			}
 		}
