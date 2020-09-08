@@ -132,26 +132,28 @@ module.exports = function(mikser) {
 		return Promise.map(
 			actionConfigs,
 			async (actionConfig) => {
-				if (!actionConfig.source) return actionConfig
+				if (!actionConfig.source) return actionConfig			
+				if (actionConfig.resultType == 'string') {
+					actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier] = actionConfig.result
+				} else {
+					actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier].push(actionConfig.result)
+				}
 
+				let caching = mikser.plugins.caching.cache(actionConfig.destination, actionConfig.destination.replace('cache', 'out'))
+				if (actionConfig.config.cache && !caching.cacheInfo.fromCache) {
+					console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
+					return caching.process().then(() => actionConfig)
+				}
+
+				console.log('⚙️', actionConfig.destination.replace(mikser.options.workingFolder, ''))
 				const processor = processors[actionConfig.config.processor] || processors['default']
-
 				return processor(mikser, _.pick(actionConfig, ['source', 'destination', 'config.actions']))
 					.then(() => {
-						if (actionConfig.resultType == 'string') {
-							actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier] = actionConfig.result
-						} else {
-							actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier].push(actionConfig.result)
-						}
-
 						if (actionConfig.config.cache) {
-							mikser.plugins.caching
-								.cache(actionConfig.destination, actionConfig.destination.replace('cache', 'out'))
-								.process()
+							return caching.process()
 						}
-
-						return actionConfig
 					})
+					.then(() => actionConfig)
 					.catch((err) => {
 						mikser.diagnostics.log('warning', err)
 					})
