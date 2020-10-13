@@ -99,57 +99,60 @@ module.exports = function(mikser) {
 			let destination = path.parse(actionConfig.file)
 			delete destination.base
 			destination.ext = '.' + (actionConfig.config.format || destination.ext.replace('.', ''))
-
+			
 			for (let action of actionConfig.config.actions) {
 				action.parameters = action.parameters.map((param) => {
 					if (_.isFunction(param)) return param(actionConfig)
 					return param
 				})
-				destination.name += '-' + action.action + '-' + action.parameters.join('x')
+				destination.name += '-' + _.kebabCase(action.action)
+				if (action.parameters.length) {
+					destination.name += '-' + _.kebabCase(action.parameters.join(' '))
+				}
 			}
-
+			
 			destination = path.format(destination)
 			actionConfig.result = destination = path.join(
 				'/',
 				config.destination || 'storage',
 				document._id
-					.split('.')
-					.slice(0, -1)
-					.join('.'),
+				.split('.')
+				.slice(0, -1)
+				.join('.'),
 				destination
-			)
+				)
+				
+				if (!actionConfig.config.cache) {
+					actionConfig.destination = path.join(mikser.config.outputFolder, destination)
+				} else {
+					actionConfig.destination = path.join(mikser.options.workingFolder, 'cache', destination)
+				}
+			})
 
-			if (!actionConfig.config.cache) {
-				actionConfig.destination = path.join(mikser.config.outputFolder, destination)
-			} else {
-				actionConfig.destination = path.join(mikser.options.workingFolder, 'cache', destination)
-			}
-		})
-
-		//PROCESS CONFIGS
-		let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
+			//PROCESS CONFIGS
+			let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
 			? 1
 			: Infinity
-		return Promise.map(
-			actionConfigs,
-			async (actionConfig) => {
-				if (!actionConfig.source) return actionConfig			
-				if (actionConfig.resultType == 'string') {
-					actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier] = actionConfig.result
-				} else if (actionConfig.resultType == 'array') {
+			return Promise.map(
+				actionConfigs,
+				async (actionConfig) => {
+					if (!actionConfig.source) return actionConfig			
+					if (actionConfig.resultType == 'string') {
+						actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier] = actionConfig.result
+					} else if (actionConfig.resultType == 'array') {
 					actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier][actionConfig.index] = actionConfig.result
 				}
-
+				
 				let caching = mikser.plugins.caching.cache(actionConfig.destination, actionConfig.destination.replace('cache', 'out'))
-				if (actionConfig.config.cache && !caching.cacheInfo.fromCache) {
+				if (actionConfig.config.cache && !caching.cacheInfo.fromCache && fs.existsSync(actionConfig.destination)) {
 					console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
 					return caching.process().then(() => actionConfig)
 				}
-
+				
 				const processor = processors[actionConfig.config.processor] || processors['default']
 				return processor(mikser, _.pick(actionConfig, ['source', 'destination', 'config.actions']))
-					.then(() => {
-						if (actionConfig.config.cache) {
+				.then(() => {
+					if (actionConfig.config.cache) {
 							return caching.process()
 						}
 					})
@@ -157,8 +160,9 @@ module.exports = function(mikser) {
 					.catch((err) => {
 						mikser.diagnostics.log('warning', err)
 					})
-			},
-			{ concurrency }
-		)
-	})
-}
+				},
+				{ concurrency }
+				)
+			})
+		}
+		
