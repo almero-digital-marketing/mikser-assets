@@ -66,8 +66,8 @@ module.exports = function(mikser) {
 						const resultType = _.isArray(object[key]) ? 'array' : 'string'
 						const resultKey = key + 'Assets'
 						object[resultKey] = object[resultKey] || { original: object[key] }
-						if (!object[resultKey][configSnapshot.modifier])
-							object[resultKey][configSnapshot.modifier] = _.isArray(object[key]) ? [] : ''
+						if (!object[resultKey][configSnapshot.property])
+							object[resultKey][configSnapshot.property] = _.isArray(object[key]) ? [] : ''
 
 						return files.map((file, index) => ({
 							key,
@@ -138,9 +138,9 @@ module.exports = function(mikser) {
 				async (actionConfig) => {
 					if (!actionConfig.source) return actionConfig			
 					if (actionConfig.resultType == 'string') {
-						actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier] = actionConfig.result
+						actionConfig.object[actionConfig.resultKey][actionConfig.config.property] = actionConfig.result
 					} else if (actionConfig.resultType == 'array') {
-					actionConfig.object[actionConfig.resultKey][actionConfig.config.modifier][actionConfig.index] = actionConfig.result
+					actionConfig.object[actionConfig.resultKey][actionConfig.config.property][actionConfig.index] = actionConfig.result
 				}
 				
 				let caching = mikser.plugins.caching.cache(actionConfig.destination, actionConfig.destination.replace('cache', 'out'))
