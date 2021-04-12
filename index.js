@@ -114,8 +114,9 @@ module.exports = function(mikser) {
 			destination = path.format(destination)
 			actionConfig.result = destination = path.join(
 				'/',
+				document.meta.domain || '',
 				config.destination || 'storage',
-				document._id
+				document._id.replace(document.meta.domain || '', '')
 				.split('.')
 				.slice(0, -1)
 				.join('.'),
