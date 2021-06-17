@@ -131,9 +131,10 @@ module.exports = function(mikser) {
 			})
 
 			//PROCESS CONFIGS
-			let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
-			? 1
-			: Infinity
+			// let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
+			// ? 1
+			// : Infinity
+			let concurrency = 1
 			return Promise.map(
 				actionConfigs,
 				async (actionConfig) => {
