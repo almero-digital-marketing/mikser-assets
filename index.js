@@ -4,6 +4,7 @@ const fs = require('fs')
 const _ = require('lodash')
 const Promise = require('bluebird')
 const jp = require('jsonpath')
+const shortHash = require('shorthash2')
 
 const processors = {
 	default: require('./processors/sharp'),
@@ -107,7 +108,10 @@ module.exports = function(mikser) {
 				})
 				destination.name += '-' + _.kebabCase(action.action)
 				if (action.parameters.length) {
-					destination.name += '-' + _.kebabCase(action.parameters.join(' '))
+					destination.name += '-' + _.kebabCase(action.parameters.map(param => {
+						if (_.isObject(param)) return shortHash(JSON.stringify(param))
+						return param
+					}).join(' '))
 				}
 			}
 			
