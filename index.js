@@ -59,7 +59,9 @@ module.exports = function(mikser) {
 			for (let path in type) {
 				for (let configItem of [].concat(type[path])) {
 					let itemKey = path.split('.').pop()
-					let results = jp.nodes(document, path).map((node) => {
+					let results = jp.nodes(document, path)
+					.filter((node) => !node.path.endsWith('Assets'))
+					.map((node) => {
 						const key = itemKey
 						let object = jp.parent(document, node.path.join('.'))
 						const files = [].concat(object[key])
