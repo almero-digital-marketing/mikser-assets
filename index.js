@@ -60,7 +60,7 @@ module.exports = function(mikser) {
 				for (let configItem of [].concat(type[path])) {
 					let itemKey = path.split('.').pop()
 					let results = jp.nodes(document, path)
-					.filter((node) => !node.path.endsWith('Assets'))
+					.filter((node) => node.path.join('.').indexOf('Assets.') == -1)
 					.map((node) => {
 						const key = itemKey
 						let object = jp.parent(document, node.path.join('.'))
