@@ -151,7 +151,11 @@ module.exports = function(mikser) {
 					actionConfig.object[actionConfig.resultKey][actionConfig.config.property][actionConfig.index] = actionConfig.result
 				}
 				
-				let caching = mikser.plugins.caching.cache(actionConfig.destination, actionConfig.destination.replace('cache', 'out'))
+				let cacheDestination = actionConfig.destination.replace(
+					path.join(mikser.options.workingFolder, 'cache', destination), 
+					path.join(mikser.config.outputFolder, destination)
+				)
+				let caching = mikser.plugins.caching.cache(actionConfig.destination, cacheDestination)
 				if (actionConfig.config.cache && !caching.cacheInfo.fromCache && fs.existsSync(actionConfig.destination)) {
 					console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
 					return caching.process().then(() => actionConfig)
