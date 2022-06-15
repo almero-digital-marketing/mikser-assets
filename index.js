@@ -159,7 +159,9 @@ module.exports = function(mikser) {
 			let caching = mikser.plugins.caching.cache(actionConfig.destination, cacheDestination)
 			if (actionConfig.config.cache && !caching.cacheInfo.fromCache && fs.existsSync(actionConfig.destination)) {
 				console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
-				return caching.process().then(() => actionConfig)
+				return caching.process().then(() => actionConfig).catch((err) => {
+					mikser.diagnostics.log('warning', err)
+				})
 			}
 			
 			const processor = processors[actionConfig.config.processor] || processors['default']
