@@ -127,54 +127,55 @@ module.exports = function(mikser) {
 				.slice(0, -1)
 				.join('.'),
 				destination
-				)
+			)
 				
-				if (!actionConfig.config.cache) {
-					actionConfig.destination = path.join(mikser.config.outputFolder, destination)
-				} else {
-					actionConfig.destination = path.join(mikser.options.workingFolder, 'cache', destination)
-				}
-			})
+			if (!actionConfig.config.cache) {
+				actionConfig.destination = path.join(mikser.config.outputFolder, destination)
+			} else {
+				actionConfig.destination = path.join(mikser.options.workingFolder, 'cache', destination)
+			}
+		})
 
-			//PROCESS CONFIGS
-			// let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
-			// ? 1
-			// : Infinity
-			let concurrency = 1
-			return Promise.map(
-				actionConfigs,
-				async (actionConfig) => {
-					if (!actionConfig.source) return actionConfig			
-					if (actionConfig.resultType == 'string') {
-						actionConfig.object[actionConfig.resultKey][actionConfig.config.property] = actionConfig.result
-					} else if (actionConfig.resultType == 'array') {
-					actionConfig.object[actionConfig.resultKey][actionConfig.config.property][actionConfig.index] = actionConfig.result
-				}
-				
-				let cacheDestination = actionConfig.destination.replace(
-					path.join(mikser.options.workingFolder, 'cache', destination), 
-					path.join(mikser.config.outputFolder, destination)
-				)
-				let caching = mikser.plugins.caching.cache(actionConfig.destination, cacheDestination)
-				if (actionConfig.config.cache && !caching.cacheInfo.fromCache && fs.existsSync(actionConfig.destination)) {
-					console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
-					return caching.process().then(() => actionConfig)
-				}
-				
-				const processor = processors[actionConfig.config.processor] || processors['default']
-				return processor(mikser, _.pick(actionConfig, ['source', 'destination', 'config.actions']))
-				.then(() => {
-					if (actionConfig.config.cache) {
-							return caching.process()
-						}
-					})
-					.then(() => actionConfig)
-					.catch((err) => {
-						mikser.diagnostics.log('warning', err)
-					})
-				},
-				{ concurrency }
-				)
-			})
-		}
+		//PROCESS CONFIGS
+		// let concurrency = _.values(_.mapValues(_.groupBy(actionConfigs, 'destination'), 'length')).find((v) => v > 1)
+		// ? 1
+		// : Infinity
+		let concurrency = 1
+		return Promise.map(
+			actionConfigs,
+			async (actionConfig) => {
+				if (!actionConfig.source) return actionConfig			
+				if (actionConfig.resultType == 'string') {
+					actionConfig.object[actionConfig.resultKey][actionConfig.config.property] = actionConfig.result
+				} else if (actionConfig.resultType == 'array') {
+				actionConfig.object[actionConfig.resultKey][actionConfig.config.property][actionConfig.index] = actionConfig.result
+			}
+			
+			let cacheDestination = actionConfig.destination.replace(
+				path.join(mikser.options.workingFolder, 'cache'), 
+				mikser.config.outputFolder
+			)
+
+			let caching = mikser.plugins.caching.cache(actionConfig.destination, cacheDestination)
+			if (actionConfig.config.cache && !caching.cacheInfo.fromCache && fs.existsSync(actionConfig.destination)) {
+				console.log('👜', actionConfig.destination.replace(mikser.options.workingFolder, ''))
+				return caching.process().then(() => actionConfig)
+			}
+			
+			const processor = processors[actionConfig.config.processor] || processors['default']
+			return processor(mikser, _.pick(actionConfig, ['source', 'destination', 'config.actions']))
+			.then(() => {
+				if (actionConfig.config.cache) {
+						return caching.process()
+					}
+				})
+				.then(() => actionConfig)
+				.catch((err) => {
+					mikser.diagnostics.log('warning', err)
+				})
+			},
+			{ concurrency }
+		)
+	})
+}
 		
